@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 import time
-
+import math
 
 if __name__ == '__main__':
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     while True:
 
         # Extract (quality, angle, distance) triples from current scan
-        items = [item for item in next(iterator)]
+        items = [item for item in next(iterator, 'end')]
 
         # Extract distances and angles from triples
         distances = [item[2] for item in items]
@@ -91,7 +91,6 @@ if __name__ == '__main__':
         print(len(mapbytes))
         np_map_bytes = np.asarray(mapbytes)
 
-
         reshaped_map_bytes = np_map_bytes.reshape((332, 249, 3))
         # create image
 
@@ -110,40 +109,47 @@ if __name__ == '__main__':
 
         treime = reshaped_map_bytes.shape[1] / 3.0
         fraction = reshaped_map_bytes.reshape((996, 83, reshaped_map_bytes.shape[2]))
-        # fraction = np.rot90(fraction, 3)
-
-        # new_img = cv2.resize(fraction, dsize)
-        # rotated_image = cv2.rotate(new_img, cv2.ROTATE_90_CLOCKWISE)
-        # cv2.imwrite('Test/new_image.png', rotated_image)
-        # cv2.imshow('Image', reshaped_map_bytes)
 
         # Display map and robot pose, exiting gracefully if user closes it
         if not viz.display(x / 1000., y / 1000., theta, mapbytes):
             exit(0)
 
         for point in quality:
-            if point == 15:
-                radian = [x * (3.14 / 180) for x in angles]
-                x_points_in_plan = [a * sin(b) for a, b in zip(distances, radian)]
-                y_points_in_plan = [a * cos(b) for a, b in zip(distances, radian)]
+            radian = [x * (3.14 / 180) for x in angles]
+            x_points_in_plan = [a * sin(b) for a, b in zip(distances, radian)]
+            y_points_in_plan = [a * cos(b) for a, b in zip(distances, radian)]
 
-                i = 0
-                for x, y in zip(x_points_in_plan, y_points_in_plan):
-                    punct = Point(x, y, angles[i], (np_map_bytes[i], np_map_bytes[i+1], np_map_bytes[i+2]), False)
-                    points_list.append(punct)
-                    i += 1
-                np_map = np.array([x_points_in_plan, y_points_in_plan])
-                #np_map_bytes = np_map_bytes.reshape(MAP_SIZE_PIXELS, MAP_SIZE_PIXELS)
-                with open("data.csv", 'w') as f:
-                    # using csv.writer method from CSV package
-                    write = csv.writer(f, delimiter=' ')
-                    write.writerows(np_map)
-        delta = list(map(operator.sub, x_points_in_plan, y_points_in_plan))
+            i = 0
+            for x, y in zip(x_points_in_plan, y_points_in_plan):
+                punct = Point(x, y, angles[i], (np_map_bytes[i], np_map_bytes[i + 1], np_map_bytes[i + 2]), False)
+                points_list.append(punct)
+                i += 1
+            np_map = np.array([x_points_in_plan, y_points_in_plan])
+            # np_map_bytes = np_map_bytes.reshape(MAP_SIZE_PIXELS, MAP_SIZE_PIXELS)
+            with open("data.csv", 'w') as f:
+                # using csv.writer method from CSV package
+                write = csv.writer(f, delimiter=' ')
+                write.writerows(np_map)
+        delta = [(point.x, point.y, point.rgb) for point in points_list]
         delta = np.array(delta)
         with open("delta.csv", 'w') as f:
             # using csv.writer method from CSV package
             write = csv.writer(f, delimiter=' ')
             write.writerow(delta)
+        # fraction = np.rot90(fraction, 3)
+
+        # new_img = cv2.resize(fraction, dsize)
+        # rotated_image = cv2.rotate(new_img, cv2.ROTATE_90_CLOCKWISE)
+        delta = delta.reshape((int(math.sqrt(delta.shape[0])), int(math.sqrt(delta.shape[0])), 3))
+        colors = np_map_bytes
+        colors = np.array(colors)
+        colors = colors.reshape(332, 249, 3)
+        # cv2.imwrite('image.png', delta)
+        img = Image.fromarray(colors, 'RGB')
+        img.save('image.png')
+        cv2.imwrite('cv.png', colors)
+        # cv2.imshow('Image', fraction)
+
         print(" The points list: " + str(points_list[1:5]))
 
     # Shut down the lidar connection
