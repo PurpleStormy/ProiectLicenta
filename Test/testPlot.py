@@ -1,33 +1,41 @@
 from gridmap import OccupancyGridMap
 import matplotlib.pyplot as plt
-from a_star import a_star
 from utils import plot_path
+import numpy as np
+from dijkstra import Solution
 
 
-if __name__ == '__main__':
-    # load the map
-    gmap = OccupancyGridMap.from_png('image.png', 1)
+import itertools
 
-    # set a start and an end node (in meters)
-    start_node = (360.0, 330.0)
-    goal_node = (285.0, 86.0)
+import matplotlib.pyplot as plt
 
-    # run A*
-    path, path_px = a_star(start_node, goal_node, gmap, movement='4N')
+from scipy import misc
+from scipy.sparse.dok import dok_matrix
+from scipy.sparse.csgraph import dijkstra
+from a_star2 import *
+import sys
 
-    gmap.plot()
+# csv = np.genfromtxt('obstacle.csv', delimiter=" ")
+# point_list = []
+# for i in range(0, csv.shape[0]):
+#     for j in range(0, csv.shape[1]):
+#         if csv[i][j] == 1:
+#             point_list.append((i, j))
+#
+# point_list = np.asarray(point_list)
+# fig = plt.figure()
+# plt.ylim(0, csv.shape[0])
+# plt.xlim(0, csv.shape[1])
+# plt.axis([0, csv.shape[0], 0, csv.shape[1]])
+# plt.scatter(point_list[:, 0], point_list[:, 1], marker=".", color="black", s=1)
+# plt.show()
+# fig.savefig('graphic_obstacles.png')
 
-    if path:
-        # plot resulting path in pixels over the map
-        plot_path(path_px)
-    else:
-        print('Goal is not reachable')
 
-        # plot start and goal points over the map (in pixels)
-        start_node_px = gmap.get_index_from_coordinates(start_node[0], start_node[1])
-        goal_node_px = gmap.get_index_from_coordinates(goal_node[0], goal_node[1])
+lab = [
+    [0, 1, 1],
+    [0, 1, 1],
+    [0, 1, 1]
+]
 
-        plt.plot(start_node_px[0], start_node_px[1], 'ro')
-        plt.plot(goal_node_px[0], goal_node_px[1], 'go')
-
-    plt.show()
+print(astar(lab, 0, 2, 2, 2))
